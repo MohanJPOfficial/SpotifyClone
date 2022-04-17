@@ -5,6 +5,7 @@ import android.support.v4.media.MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.MediaMetadataCompat.*
+import android.util.Log
 import androidx.core.net.toUri
 import com.example.spotifyclone.data.remote.MusicDatabase
 import com.example.spotifyclone.other.State
@@ -14,7 +15,9 @@ import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import javax.inject.Inject
+import kotlin.math.log
 
 class FirebaseMusicSource @Inject constructor(
     private val musicDatabase: MusicDatabase
@@ -25,6 +28,7 @@ class FirebaseMusicSource @Inject constructor(
     suspend fun fetchMediaData() = withContext(Dispatchers.IO) {
         state = State.STATE_INITIALIZING
         val allSongs = musicDatabase.getAllSongs()
+        Log.d("FirebaseMusicSource", "fetchMediaData: $allSongs")
         songs = allSongs.map { song ->
             MediaMetadataCompat.Builder()
                 .putString(METADATA_KEY_ARTIST, song.subtitle)

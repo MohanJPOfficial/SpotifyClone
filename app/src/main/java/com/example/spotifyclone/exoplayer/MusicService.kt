@@ -13,6 +13,7 @@ import com.example.spotifyclone.exoplayer.callbacks.MusicPlayerEventListener
 import com.example.spotifyclone.exoplayer.callbacks.MusicPlayerNotificationListener
 import com.example.spotifyclone.other.Constants.MEDIA_ROOT_ID
 import com.example.spotifyclone.other.Constants.NETWORK_ERROR
+import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
@@ -31,7 +32,7 @@ class MusicService : MediaBrowserServiceCompat() {
     lateinit var dataSourceFactory: DefaultDataSourceFactory
 
     @Inject
-    lateinit var exoPlayer: SimpleExoPlayer
+    lateinit var exoPlayer: ExoPlayer
 
     @Inject
     lateinit var firebaseMusicSource: FirebaseMusicSource
@@ -60,7 +61,7 @@ class MusicService : MediaBrowserServiceCompat() {
     override fun onCreate() {
         super.onCreate()
 
-        serviceScope.launch {
+        CoroutineScope(Dispatchers.Main).launch {
             firebaseMusicSource.fetchMediaData()
         }
 
@@ -117,9 +118,12 @@ class MusicService : MediaBrowserServiceCompat() {
     ) {
         val curSongIndex = if(curPlayingSong == null) 0 else songs.indexOf(itemToPlay)
         exoPlayer.apply {
-            prepare(firebaseMusicSource.asMediaSource(dataSourceFactory))
-            seekTo(curSongIndex, 0L)
-            playWhenReady = playNow
+            CoroutineScope(Dispatchers.Main).launch {
+
+                prepare(firebaseMusicSource.asMediaSource(dataSourceFactory))
+                seekTo(curSongIndex, 0L)
+                playWhenReady = playNow
+            }
         }
     }
 
@@ -132,8 +136,8 @@ class MusicService : MediaBrowserServiceCompat() {
         super.onDestroy()
         serviceScope.cancel()
 
-        exoPlayer.release()
         exoPlayer.removeListener(musicPlayerEventListener)
+        exoPlayer.release()
     }
 
     override fun onGetRoot(
